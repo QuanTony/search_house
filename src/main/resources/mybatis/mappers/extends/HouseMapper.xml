@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.project.search.dao.mappers.HouseExtMapper">
+    <select id="getHouseList" parameterType="com.project.search.entity.param.DataTableSearch" resultType="com.project.search.dao.model.House">
+        select * from house where status not in (3)
+        <if test="city != null and city != ''">
+              and city_en_name = #{city}
+        </if>
+        <if test="status != null">
+              and status = #{status}
+        </if>
+        <if test="title != null and title != ''">
+              and title LIKE CONCAT('%',#{title},'%')
+        </if>
+        <if test="createTimeMin != null">
+              and create_time > #{createTimeMin}
+        </if>
+        <if test="createTimeMax != null">
+              and #{createTimeMax} >= create_time
+        </if>
+        <!--<if test="orderBy != null and orderBy != ''">-->
+            <!--order by ${orderBy}-->
+        <!--</if>-->
+    </select>
+    
+    <update id="updateHouseStatus">
+        update house SET status = #{status} where id = #{id}
+    </update>
+
+    <select id="getIndexHouseList" parameterType="com.project.search.entity.param.RentSearch" resultType="com.project.search.dao.model.House">
+        select * from house where status = 1
+        <if test="cityEnName != null and cityEnName != ''">
+            and city_en_name = #{cityEnName}
+        </if>
+        <if test="direction != 0">
+            and direction = #{direction}
+        </if>
+        <if test="orderBy != null and orderBy != ''">
+        order by ${orderBy}
+        </if>
+        <if test="orderDirection !=null and orderDirection != ''">
+            ${orderDirection}
+        </if>
+    </select>
+</mapper>

@@ -1,0 +1,77 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>寻屋-后台登录系统</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <script type="text/javascript" th:src="@{/static/lib/jquery/1.9.1/jquery.js}"></script>
+    <link rel="stylesheet" th:href="@{/static/css/admin/login-style.css}" type="text/css" />
+    <!--<script type="text/javascript" th:src="@{/static/js/admin/selectivizr.js}"></script>-->
+    <noscript><link rel="stylesheet" th:href="@{/static/css/admin/login-fallback.css}" /></noscript>
+
+</head>
+
+<body>
+<div id="container">
+    <form action="#"  method="post">
+        <div class="login">管理员登录</div>
+        <!--<div th:if="${param.error}" style="position: absolute; color: red; padding-top: 6%; padding-left: 3%">-->
+            <!--非法的用户名或密码-->
+        <!--</div>-->
+        <div class="username-text">用户名:</div>
+        <div class="password-text">密码:</div>
+        <div class="username-field">
+            <input type="text" id="username" name="loginName" placeholder="请输入用户名"/>
+        </div>
+        <div class="password-field">
+            <input type="password" id="password" name="password" placeholder="请输入密码" />
+        </div>
+
+
+        <!--<input type="checkbox" name="remember-me" id="remember-me" /><label for="remember-me">Remember me</label>-->
+        <!--<div class="forgot-usr-pwd">Forgot <a href="#">username</a> or <a href="#">password</a>?</div>-->
+
+        <div class="login-button">
+            <button type="button" class="login_button" onclick="login()">登录</button>
+        </div>
+    </form>
+</div>
+<div id="footer">
+    寻屋-后台管理系统 <a href="#" target="_blank" title="登录"></a>
+</div>
+</body>
+
+<script type="text/javascript">
+    function login(){
+        $.ajax({
+            url: "/login/admin",
+            type: "POST",
+            data:JSON.stringify({"loginName":$("#username").val(),"password":$("#password").val()}),
+            contentType:"application/json; charset=utf-8",
+            success:function(data){
+                if(data.code == "000000"){
+                    sessionStorage.setItem("authorization",data.data);
+                    window.location.href="/admin/center";
+                }else{
+                    alert("登录失败")
+                }
+            },
+            error:function(){
+
+            }
+        });
+    }
+
+    function loginSuccess(authorization){
+        $.ajax({
+            type: "GET",
+            url: "/login/test",
+            beforeSend: function(request) {
+                request.setRequestHeader("Authorization", authorization);
+            },
+            success: function(){
+            }
+        });
+    }
+</script>
+</html>

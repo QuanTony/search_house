@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+    <!-- 数据库驱动:选择你的本地硬盘上面的数据库驱动包-->
+    <!--<classPathEntry  location="${basedir}/tool/lib/mysql-connector-java-5.1.44.jar"/>-->
+    <context id="Morning_star" targetRuntime="MyBatis3">
+        <commentGenerator>
+            <!--不生成mybatis注释-->
+            <property name="suppressAllComments" value="true"/>
+        </commentGenerator>
+        <!--数据库链接URL，用户名、密码 -->
+        <jdbcConnection driverClass="com.mysql.jdbc.Driver"
+                        connectionURL="jdbc:mysql://127.0.0.1:3306/xunwu?useUnicode=true&amp;characterEncoding=utf-8"
+                        userId="root"
+                        password="root" />
+        <!-- 生成模型的包名和位置-->
+        <javaModelGenerator targetPackage="com.project.search.dao.model" targetProject="src/main/java">
+            <property name="enableSubPackages" value="true"/>
+            <property name="trimStrings" value="true"/>
+        </javaModelGenerator>
+        <!-- 生成映射文件的包名和位置-->
+        <sqlMapGenerator targetPackage="mybatis.mappers.origin" targetProject="src/main/resources">
+            <property name="enableSubPackages" value="true"/>
+        </sqlMapGenerator>
+        <!-- 生成DAO的包名和位置-->
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.project.search.dao.mappers" targetProject="src/main/java">
+            <property name="enableSubPackages" value="true"/>
+        </javaClientGenerator>
+
+        <table tableName="house" domainObjectName="House"></table>
+        <!--<table tableName="house_name" domainObjectName="HouseName"></table>-->
+        <!--<table tableName="house_detail" domainObjectName="HouseDetail"></table>-->
+        <!--<table tableName="house_picture" domainObjectName="HousePicture"></table>-->
+        <!--<table tableName="house_subscribe" domainObjectName="HouseSubscribe"></table>-->
+        <!--<table tableName="house_tag" domainObjectName="HouseTag"></table>-->
+        <!--<table tableName="subway" domainObjectName="Subway"></table>-->
+        <!--<table tableName="subway_station" domainObjectName="SubwayStation"></table>-->
+        <!--<table tableName="support_address" domainObjectName="SupportAddress"></table>-->
+
+        <!--<table tableName="user" domainObjectName="User"></table>-->
+        <!--<table tableName="role" domainObjectName="Role"></table>-->
+        <!--<table tableName="action" domainObjectName="Action"></table>-->
+        <!--<table tableName="permission" domainObjectName="Permission"></table>-->
+        <!--<table tableName="sys_user_role" domainObjectName="SysUserRole"></table>-->
+        <!--<table tableName="sys_role_permission" domainObjectName="SysRolePermission"></table>-->
+        <!--<table tableName="sys_role_action" domainObjectName="SysRoleAction"></table>-->
+    </context>
+</generatorConfiguration>
