@@ -45,7 +45,7 @@ $(function () {
             type: 'POST',
             data: $('.user-right .wait-record form').serialize(),
             success: function (data) {
-                if (data.code === 200) {
+                if (data.code === '000000') {
                     $('.user-right .wait-record input[name="houseId"]:checked').parent().remove();
                     layer.msg('预约成功', {icon: 6, time: 2000});
 
@@ -74,7 +74,7 @@ $(function () {
                 url: '/api/user/house/subscribe?houseId=' + selected,
                 type: 'DELETE',
                 success: function (data) {
-                    if (data.code === 200) {
+                    if (data.code === '000000') {
                         $('.user-right .subscribe input[name="houseId"]:checked').parent().parent().remove();
                         layer.msg('已取消预约!', {icon: 6, time: 2000});
                     } else if (data.code === 403) {
@@ -162,9 +162,9 @@ $(function () {
     });
 
     function submitSuccess(data) {
-        if (data.code === 200) {
+        if (data.code === '000000') {
             layer.msg('已修改成功!', {icon: 6, time: 2000});
-        } else if (data.code === 403) {
+        } else if (data.code === '000001') {
             layer.msg('登录失效!', {icon: 5, time: 2000});
         } else {
             layer.msg(data.message, {icon: 5, time: 2000});

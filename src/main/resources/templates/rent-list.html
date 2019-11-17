@@ -442,7 +442,7 @@
                 $.ajax({
                     url: '/rent/house/autocomplete?prefix=' + request.term,
                     success: function (res) {
-                        if (res.code === 200) {
+                        if (res.code === '000000') {
                             response(res.data);
                         }
                     }

@@ -23,4 +23,19 @@ public interface SearchService {
      * @return
      */
     List<Integer> query(RentSearch rentSearch);
+
+    /**
+     * 获取关键词补全
+     * @return
+     */
+    List<String> suggest(String prefix);
+
+    /**
+     * 聚合搜索所在小区
+     * @param cityName
+     * @param regionName
+     * @param district
+     * @return
+     */
+    Long aggregateDistrictHouse(String cityName,String regionName,String district);
 }

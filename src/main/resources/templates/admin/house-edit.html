@@ -289,7 +289,7 @@
                 url: '/admin/house/tag?house_id=' + [[${house.id}]] + '&tag=' + $(this).text(),
                 type: 'DELETE',
                 success: function (data) {
-                    if (data.code === 200) {
+                    if (data.code === '000000') {
                         tagSpan.removeClass('label-success').addClass('label-default').css('border', 'none');
                         layer.msg('已移除该标签!', {icon: 6, time: 1000});
                     } else {
@@ -309,7 +309,7 @@
                     'tag': $(this).text()
                 },
                 success: function (data) {
-                    if (data.code === 200) {
+                    if (data.code === '000000') {
                         tagSpan.removeClass('label-default').addClass('label-success').css('border', 'solid 1px black');
                         layer.msg('已添加该标签!', {icon: 6, time: 1000});
                     } else {

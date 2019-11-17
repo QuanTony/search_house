@@ -251,7 +251,7 @@ public class HouseServiceImpl implements HouseService {
         SupportAddress city = supportAddressMapper.selectByExample(supportAddressExample).get(0);
 
         supportAddressExample.clear();
-        supportAddressExample.createCriteria().andEnNameEqualTo(cityName).andBelongToEqualTo(city.getEnName());
+        supportAddressExample.createCriteria().andEnNameEqualTo(regionName).andBelongToEqualTo(city.getEnName());
         SupportAddress region = supportAddressMapper.selectByExample(supportAddressExample).get(0);
 
         resultMap.put("city", city);

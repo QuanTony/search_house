@@ -2,6 +2,7 @@ package com.project.search.controller;
 
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Maps;
+import com.project.search.common.exception.BusinessException;
 import com.project.search.common.utils.ResultHelper;
 import com.project.search.config.interf.PassPermission;
 import com.project.search.dao.model.House;
@@ -11,7 +12,9 @@ import com.project.search.entity.dto.HouseDTO;
 import com.project.search.entity.param.RentSearch;
 import com.project.search.entity.param.RentValueBlock;
 import com.project.search.service.HouseService;
+import com.project.search.service.SearchService;
 import com.project.search.service.UserService;
+import io.swagger.annotations.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +37,9 @@ public class HouseController {
 
     @Autowired
     private HouseService houseService;
+
+    @Autowired
+    private SearchService searchService;
 
     /**
      * 获取支持城市列表
@@ -140,6 +146,12 @@ public class HouseController {
         return "rent-list";
     }
 
+    /**
+     * 根据id找到房屋详细信息
+     * @param houseId
+     * @param model
+     * @return
+     */
     @GetMapping("rent/house/show/{id}")
     public String show(@PathVariable(value = "id") Long houseId,
                        Model model) {
@@ -163,9 +175,24 @@ public class HouseController {
         model.addAttribute("agent", user);
         model.addAttribute("house", houseDTO);
 
-//        ServiceResult<Long> aggResult = searchService.aggregateDistrictHouse(city.getEnName(), region.getEnName(), houseDTO.getDistrict());
-//        model.addAttribute("houseCountInDistrict", aggResult.getResult());
+        Long aggResult = searchService.aggregateDistrictHouse(city.getEnName(), region.getEnName(), houseDTO.getDistrict());
+        model.addAttribute("houseCountInDistrict", aggResult);
 
         return "house-detail";
     }
+
+    /**
+     * 自动补全接口
+     */
+    @GetMapping("rent/house/autocomplete")
+    @ResponseBody
+    public Object autocomplete(@RequestParam(value = "prefix") String prefix) {
+
+        if (prefix.isEmpty()) {
+            throw new BusinessException("prefix 为空,");
+        }
+        List<String> result = searchService.suggest(prefix);
+        return new ResultHelper().newSuccessResult(result);
+    }
+
 }

@@ -380,7 +380,7 @@
                     },
                     type: 'POST',
                     success: function (data) {
-                        if (data.code === 200) {
+                        if (data.code === '000000') {
                             subscribeBtn.attr('data-bind', "1");
                             subscribeBtn.css('background-color', '#6a7b8c');
                             subscribeBtn.css('color', 'black');
@@ -409,7 +409,7 @@
                         url: '/api/user/house/subscribe?house_id=' + houseId,
                         type: 'DELETE',
                         success: function (data) {
-                            if (data.code === 200) {
+                            if (data.code === '000000') {
                                 subscribeBtn.attr('data-bind', "0")
                                     .css('background-color', '#0054a5')
                                     .css('color', '#fff');

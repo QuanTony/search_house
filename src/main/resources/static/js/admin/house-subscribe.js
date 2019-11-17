@@ -141,7 +141,7 @@ function finishSubscribe(obj, id) {
                 house_id: id
             },
             success: function (data) {
-                if (data.code === 200) {
+                if (data.code === '000000') {
                     $(obj).parents("tr").remove();
                     layer.msg('已完成!', {icon: 1, time: 1000});
                     reloadTable();

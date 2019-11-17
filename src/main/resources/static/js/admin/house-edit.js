@@ -73,7 +73,7 @@ $(function () {
                     url: '/admin/house/cover',
                     data: {'cover_id': id, 'target_id': target_house_id},
                     success: function (data) {
-                        if (data.code === 200) {
+                        if (data.code === '000000') {
                             layer.msg('设置成功', {icon: 1, time: 1000});
                         } else {
                             layer.msg('设置失败！Reason: ' + data.message, {icon: 1, time: 3000});
@@ -90,7 +90,7 @@ $(function () {
                     type: 'DELETE',
                     url: '/admin/house/photo?id=' + id,
                     success: function (data) {
-                        if (data.code === 200) {
+                        if (data.code === '000000') {
                             img.remove();
                             layer.msg('已删除', {icon: 1, time: 1000});
                         } else {
@@ -184,7 +184,7 @@ $(function () {
                 type: 'post',
                 url: '/admin/house/edit', // 提交地址
                 success: function (data) {
-                    if (data.code === 200) {
+                    if (data.code === '000000') {
                         alert('提交成功！');
                         parent_reload();
                         var index = parent.layer.getFrameIndex(window.name);

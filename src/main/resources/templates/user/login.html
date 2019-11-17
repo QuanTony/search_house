@@ -165,7 +165,7 @@
                 url: '/sms/code?telephone=' + telephone,
                 type: 'GET',
                 success: function (data) {
-                    if (data.code === 200) {
+                    if (data.code === '000000') {
                         var smsBtn = $('#smsCodeBtn');
                         smsBtn.attr('disabled', 'disabled');
                         smsBtn.css("background-color", "#b4b2b3");

@@ -247,7 +247,7 @@ function loadHouseData() {
                 var cityName = $('#cityEnName').val();
                 $.get('/rent/house/map/houses?cityEnName=' + cityName + '&start=' + start + '&size=3' + target,
                     function (res) {
-                        if (res.code !== 200) {
+                        if (res.code !=== '000000') {
                             lis.push('<li>数据加载错误</li>');
                         } else {
                             layui.each(res.data, function (index, house) {
