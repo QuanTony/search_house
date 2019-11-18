@@ -30,9 +30,6 @@ public class BeanValidators {
         }
     }
 
-    public static void main(String[] args) {
-        System.out.println(new BusinessException("123"));
-    }
     /**
      * 调用JSR303的validate方法, 验证失败时抛出ConstraintViolationException.
      */

@@ -11,6 +11,7 @@ package com.project.search.common.utils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
+import redis.clients.jedis.Jedis;
 
 import javax.annotation.Resource;
 import java.io.Serializable;
