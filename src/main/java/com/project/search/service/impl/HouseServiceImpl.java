@@ -281,13 +281,6 @@ public class HouseServiceImpl implements HouseService {
 
         houseExtMapper.updateHouseStatus(id, status);
 
-        // 上架更新索引 其他情况都要删除索引
-//        if (status == HouseStatus.PASSES.getValue()) {
-//            searchService.index(id.intValue());
-//        } else {
-//            searchService.remove(id.toString());
-//        }
-
         //此处用rabbitmq吧id发送到broker后, 异步处理
         Map<String,Object> paramMap = new HashMap<>();
         paramMap.put("status",status);

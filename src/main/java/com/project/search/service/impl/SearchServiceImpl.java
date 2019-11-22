@@ -122,14 +122,13 @@ public class SearchServiceImpl implements SearchService{
         Long totalHit = response.getHits().getTotalHits();
 
         //如果查询出来的数据等于0创建新的,如果等于1就更新,否则脏数据删除index后创建
-        boolean isSuccess = true;
         if (totalHit == 0) {
-            isSuccess = createIndex(houseIndexTemplate);
+            createIndex(houseIndexTemplate);
         } else if (totalHit == 1) {
             String esId = response.getHits().getAt(0).getId();
-            isSuccess = updateIndex(houseIndexTemplate,esId);
+            updateIndex(houseIndexTemplate,esId);
         } else {
-            isSuccess = deleteAndCreateIndex(totalHit, houseIndexTemplate);
+            deleteAndCreateIndex(totalHit, houseIndexTemplate);
         }
 
     }
@@ -242,14 +241,17 @@ public class SearchServiceImpl implements SearchService{
     public List<String> suggest(String prefix) {
         List<String> result = new ArrayList<>();
         //生成搜索提示的构造器,completionSuggestion里面放的是提示的数组名，size是大小
-        CompletionSuggestionBuilder completionSuggestionBuilder = SuggestBuilders.completionSuggestion("suggest").prefix(prefix).size(5);
+        CompletionSuggestionBuilder completionSuggestionBuilder =
+                SuggestBuilders.completionSuggestion("suggest").prefix(prefix).size(5);
 
         //把搜索的限定条件放入构造器，作为查询依据
         SuggestBuilder suggestBuilder = new SuggestBuilder();
         suggestBuilder.addSuggestion("autoCompletion",completionSuggestionBuilder);
 
         //通过es进行查询,获取查询出来的suggest
-        SearchRequestBuilder searchRequestBuilder = esClient.prepareSearch(INDEX_NAME).setTypes(INDEX_TYPE).suggest(suggestBuilder);
+        SearchRequestBuilder searchRequestBuilder = esClient.prepareSearch(INDEX_NAME)
+                .setTypes(INDEX_TYPE).suggest(suggestBuilder);
+
         SearchResponse response = searchRequestBuilder.get();
         Suggest suggestions = response.getSuggest();
 
@@ -299,7 +301,8 @@ public class SearchServiceImpl implements SearchService{
                 .filter(QueryBuilders.termQuery(HouseIndexKey.DISTRICT,district));
 
         //查询数据，同时设置搜索的聚合名称和要放入字段
-        SearchRequestBuilder searchRequestBuilder = esClient.prepareSearch(INDEX_NAME).setTypes(INDEX_TYPE).setQuery(boolQueryBuilder)
+        SearchRequestBuilder searchRequestBuilder = esClient.prepareSearch(INDEX_NAME).setTypes(INDEX_TYPE)
+                .setQuery(boolQueryBuilder)
                 .addAggregation(AggregationBuilders.terms(HouseIndexKey.AGG_DISTRICT).field(HouseIndexKey.DISTRICT)).setSize(0);
 
         SearchResponse searchResponse = searchRequestBuilder.get();

@@ -3,6 +3,7 @@ package com.project.search.config.rabbitmq;
 import com.project.search.constants.MqConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,9 @@ public class MqSender implements RabbitTemplate.ConfirmCallback,RabbitTemplate.R
         //生成唯一标识id
         CorrelationData correlationData = new CorrelationData(UUID.randomUUID().toString());
         System.out.println("消息id:" + correlationData.getId());
+//        MessageProperties messageProperties = new MessageProperties();
+//        messageProperties.getHeaders().put("desc","desc..");
+//        Message msg = new Message(message.getBytes(),messageProperties);
         this.rabbitTemplate.convertAndSend(MqConstants.ES_EXCHANGE_NAME, topicKey, message, correlationData);
     }
 
