@@ -1,5 +1,6 @@
 package com.project.search.entity.es;
 
+import com.project.search.entity.dto.BaiduMapLocation;
 import lombok.Data;
 
 import java.util.Date;
@@ -53,5 +54,7 @@ public class HouseIndexTemplate {
     private List<String> tags;
 
     private List<HouseSuggest> suggest;
+
+    private BaiduMapLocation location;
 
 }

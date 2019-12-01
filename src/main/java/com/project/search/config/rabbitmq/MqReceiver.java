@@ -24,6 +24,7 @@ public class MqReceiver {
 
     @RabbitListener(queues= MqConstants.ES_QUEUE_NAME)
     public void receive(String message){
+        //try catch 捕获异常处理 记录
         Map<String,Object> paramMap = JsonMapper.parseObject(JSON.parse(message),Map.class);
         int status = (int)paramMap.get("status");
         Integer houseId = (Integer)paramMap.get("houseId");

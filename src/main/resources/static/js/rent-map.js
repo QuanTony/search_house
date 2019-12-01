@@ -12,7 +12,7 @@ var regionCountMap = {}, // 地区数据
 function load(city, regions, aggData) {
     // 百度地图API功能
     var map = new BMap.Map("allmap", {minZoom: 12}); // 创建实例。设置地图显示最大级别为城市
-    var point = new BMap.Point(city.baiduMapLongitude, city.baiduMapLatitude); // 城市中心
+    var point = new BMap.Point(city.baiduMapLng, city.baiduMapLat); // 城市中心
     map.centerAndZoom(point, 12); // 初始化地图，设置中心点坐标及地图级别
 
     map.addControl(new BMap.NavigationControl({enableGeolocation: true})); // 添加比例尺控件
@@ -49,7 +49,7 @@ function drawRegion(map, regionList) {
     var textLabel;
     for (var i = 0; i < regionList.length; i++) {
 
-        regionPoint = new BMap.Point(regionList[i].baiduMapLongitude, regionList[i].baiduMapLatitude);
+        regionPoint = new BMap.Point(regionList[i].baiduMapLng, regionList[i].baiduMapLat);
 
         var houseCount = 0;
         if (regionList[i].en_name in regionCountMap) {
@@ -247,7 +247,7 @@ function loadHouseData() {
                 var cityName = $('#cityEnName').val();
                 $.get('/rent/house/map/houses?cityEnName=' + cityName + '&start=' + start + '&size=3' + target,
                     function (res) {
-                        if (res.code !=== '000000') {
+                        if (res.code !== '000000') {
                             lis.push('<li>数据加载错误</li>');
                         } else {
                             layui.each(res.data, function (index, house) {

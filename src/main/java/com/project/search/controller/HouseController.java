@@ -8,7 +8,9 @@ import com.project.search.config.interf.PassPermission;
 import com.project.search.dao.model.House;
 import com.project.search.dao.model.SupportAddress;
 import com.project.search.dao.model.User;
+import com.project.search.entity.dto.HouseBucketDTO;
 import com.project.search.entity.dto.HouseDTO;
+import com.project.search.entity.param.MapSearch;
 import com.project.search.entity.param.RentSearch;
 import com.project.search.entity.param.RentValueBlock;
 import com.project.search.service.HouseService;
@@ -18,6 +20,7 @@ import io.swagger.annotations.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -195,4 +198,52 @@ public class HouseController {
         return new ResultHelper().newSuccessResult(result);
     }
 
+
+    /**
+     * 地图找房功能
+     */
+    @GetMapping("rent/house/map")
+    public String rentMapPage(@RequestParam(value = "cityEnName") String cityEnName,
+                              Model model,
+                              HttpSession session,
+                              RedirectAttributes redirectAttributes) {
+        List<SupportAddress> supportAddressList = (List<SupportAddress>)houseService.getSupportAddress(cityEnName);
+        if (supportAddressList.size() < 1) {
+            redirectAttributes.addAttribute("msg", "must_chose_city");
+            return "redirect:/index";
+        } else {
+            session.setAttribute("cityName", cityEnName);
+            model.addAttribute("city", supportAddressList.get(0));
+        }
+
+        List<SupportAddress> SupportRegionsList = (List<SupportAddress>)houseService.getSupportRegions(cityEnName);
+        if (SupportRegionsList.size() < 1) {
+            redirectAttributes.addAttribute("msg", "error with regions");
+            return "redirect:/index";
+        }
+
+        List<HouseBucketDTO> mapAggregateList = searchService.mapAggregate(cityEnName);
+
+        model.addAttribute("aggData", mapAggregateList);
+        model.addAttribute("total", mapAggregateList.size());
+        model.addAttribute("regions", SupportRegionsList);
+        return "rent-map";
+    }
+
+    @GetMapping("rent/house/map/houses")
+    @ResponseBody
+    public Object rentMapHouses(@ModelAttribute MapSearch mapSearch) {
+        if (mapSearch.getCityEnName() == null) {
+            throw new BusinessException("city name can not be null");
+        }
+        List<HouseDTO> houseDTOS = new ArrayList<>();
+        if (mapSearch.getLevel() < 13) {
+            houseDTOS = (List<HouseDTO>)houseService.wholeMapQuery(mapSearch);
+        } else {
+            // 小地图查询必须要传递地图边界参数
+            houseDTOS = (List<HouseDTO>)houseService.boundMapQuery(mapSearch);
+        }
+        return new ResultHelper().newSuccessResult(houseDTOS);
+
+    }
 }

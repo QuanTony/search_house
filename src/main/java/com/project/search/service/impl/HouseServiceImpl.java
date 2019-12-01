@@ -1,5 +1,7 @@
 package com.project.search.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Maps;
@@ -13,15 +15,20 @@ import com.project.search.config.rabbitmq.MqSender;
 import com.project.search.constants.MqConstants;
 import com.project.search.dao.mappers.*;
 import com.project.search.dao.model.*;
+import com.project.search.entity.dto.BaiduMapLocation;
 import com.project.search.entity.dto.HouseDTO;
 import com.project.search.entity.dto.HouseDetailDTO;
 import com.project.search.entity.dto.HousePictureDTO;
-import com.project.search.entity.param.DataTableSearch;
-import com.project.search.entity.param.HouseForm;
-import com.project.search.entity.param.PhotoForm;
-import com.project.search.entity.param.RentSearch;
+import com.project.search.entity.param.*;
 import com.project.search.service.HouseService;
 import com.project.search.service.SearchService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,12 +38,22 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.*;
 
 @Service
+@Slf4j
 public class HouseServiceImpl implements HouseService {
     @Value("${fastdfs.url}")
     private String picUrl;
+
+    @Value("${baidu.api.url}")
+    private String baiduUrl;
+
+    @Value("${baidu.api.key}")
+    private String baiduKey;
 
     @Autowired
     private SupportAddressMapper supportAddressMapper;
@@ -257,6 +274,80 @@ public class HouseServiceImpl implements HouseService {
         resultMap.put("city", city);
         resultMap.put("region", region);
         return resultMap;
+    }
+
+    @Override
+    public Object getBaiduMapLocation(String cityEnName, String address) {
+        String encodeAddress;
+        String encodeCity;
+
+        try {
+            encodeAddress = URLEncoder.encode(address, "UTF-8");
+            encodeCity = URLEncoder.encode(cityEnName, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            log.error("Error to encode house address", e);
+            throw new BusinessException("Error to encode house address");
+        }
+
+        HttpClient httpClient = HttpClients.createDefault();
+        StringBuilder sb = new StringBuilder(baiduUrl);
+        sb.append("address=").append(encodeAddress).append("&")
+                .append("city=").append(encodeCity).append("&")
+                .append("output=json&")
+                .append("ak=").append(baiduKey);
+
+        HttpGet get = new HttpGet(sb.toString());
+        try {
+            HttpResponse response = httpClient.execute(get);
+            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                throw new BusinessException("Can not get baidu map location");
+            }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            String result = EntityUtils.toString(response.getEntity(), "UTF-8");
+            JsonNode jsonNode = objectMapper.readTree(result);
+            int status = jsonNode.get("status").asInt();
+            if (status != 0) {
+                throw new BusinessException("Can not get baidu map location");
+            } {
+                BaiduMapLocation location = new BaiduMapLocation();
+                JsonNode jsonLocation = jsonNode.get("result").get("location");
+                location.setLongitude(jsonLocation.get("lng").asDouble());
+                location.setLatitude(jsonLocation.get("lat").asDouble());
+                return location;
+            }
+
+        } catch (IOException e) {
+            log.error("Error to fetch baidumap api", e);
+            throw new BusinessException("Error to fetch baidumap api");
+        }
+    }
+
+    @Override
+    public Object wholeMapQuery(MapSearch mapSearch) {
+        //首先根据es获取地图区域的房屋ids
+        List<Integer> mapHouseIds = searchService.getMapHouse(mapSearch.getCityEnName(), mapSearch.getOrderBy(), mapSearch.getOrderDirection(), mapSearch.getStart(), mapSearch.getSize());
+
+        List<HouseDTO> houseDTOS = new ArrayList<>();
+
+        if (!mapHouseIds.isEmpty()){
+            PageInfo pageInfo = (PageInfo)getHouseListByEs(mapHouseIds);
+            houseDTOS = pageInfo.getList();
+        }
+        return houseDTOS;
+    }
+
+    @Override
+    public Object boundMapQuery(MapSearch mapSearch) {
+        //首先根据es获取地图区域的房屋ids
+        List<HouseDTO> houseDTOS = new ArrayList<>();
+        List<Integer> mapHouseIds = searchService.getMapHouse(mapSearch);
+
+        if (!mapHouseIds.isEmpty()){
+            PageInfo pageInfo = (PageInfo)getHouseListByEs(mapHouseIds);
+            houseDTOS = pageInfo.getList();
+        }
+        return houseDTOS;
     }
 
     @Override

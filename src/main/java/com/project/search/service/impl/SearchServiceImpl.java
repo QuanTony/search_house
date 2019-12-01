@@ -4,17 +4,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.project.search.common.exception.BusinessException;
+import com.project.search.common.utils.ResultHelper;
 import com.project.search.common.utils.StringUtils;
 import com.project.search.common.utils.TransferOrderUtil;
 import com.project.search.dao.mappers.HouseDetailMapper;
 import com.project.search.dao.mappers.HouseMapper;
 import com.project.search.dao.mappers.HouseTagMapper;
+import com.project.search.dao.mappers.SupportAddressMapper;
 import com.project.search.dao.model.*;
+import com.project.search.entity.dto.BaiduMapLocation;
+import com.project.search.entity.dto.HouseBucketDTO;
 import com.project.search.entity.es.HouseIndexKey;
 import com.project.search.entity.es.HouseIndexTemplate;
 import com.project.search.entity.es.HouseSuggest;
+import com.project.search.entity.param.MapSearch;
 import com.project.search.entity.param.RentSearch;
 import com.project.search.entity.param.RentValueBlock;
+import com.project.search.service.HouseService;
 import com.project.search.service.SearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction;
@@ -26,6 +32,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -52,10 +59,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import javax.xml.stream.Location;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -73,6 +78,9 @@ public class SearchServiceImpl implements SearchService{
 
     @Autowired
     private HouseTagMapper houseTagMapper;
+
+    @Autowired
+    private HouseService houseService;
 
     @Autowired
     private TransportClient esClient;
@@ -94,6 +102,7 @@ public class SearchServiceImpl implements SearchService{
         House house = houseList.get(0);
 
         modelMapper.map(house,houseIndexTemplate);
+
         //查出对应的house detail
         HouseDetailExample houseDetailExample = new HouseDetailExample();
         houseDetailExample.createCriteria().andHouseIdEqualTo(houseId);
@@ -104,6 +113,19 @@ public class SearchServiceImpl implements SearchService{
         HouseDetail houseDetail = houseDetailList.get(0);
 
         modelMapper.map(houseDetail,houseIndexTemplate);
+
+        //查出百度地图相关坐标
+        List<SupportAddress> supportAddresses = (List<SupportAddress>)houseService.getSupportAddress(house.getCityEnName());
+        SupportAddress city = supportAddresses.get(0);
+        List<SupportAddress> supportRegions = (List<SupportAddress>)houseService.getSupportRegions(house.getCityEnName());
+        SupportAddress region = supportRegions.get(0);
+
+        String address = city.getCnName() + region.getCnName() + house.getStreet() + house.getDistrict() + houseDetail.getAddress();
+        BaiduMapLocation location = (BaiduMapLocation)houseService.getBaiduMapLocation(city.getCnName(),address);
+        if (null != location) {
+            houseIndexTemplate.setLocation(location);
+        }
+
         //查出对应house tag信息
         HouseTagExample houseTagExample = new HouseTagExample();
         houseTagExample.createCriteria().andHouseIdEqualTo(houseId);
@@ -318,6 +340,90 @@ public class SearchServiceImpl implements SearchService{
 
         }
         return 0L;
+    }
+
+    @Override
+    public List<HouseBucketDTO> mapAggregate(String cityEnName) {
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        //先筛选出数据集
+        boolQueryBuilder.filter(QueryBuilders.termQuery(HouseIndexKey.CITY_EN_NAME,cityEnName));
+        //聚合定义名称以及聚合的字段
+        AggregationBuilder aggregationBuilder = AggregationBuilders.terms(HouseIndexKey.AGG_REGION)
+                .field(HouseIndexKey.REGION_EN_NAME);
+
+        SearchRequestBuilder searchRequestBuilder = esClient.prepareSearch(INDEX_NAME).setTypes(INDEX_TYPE).setQuery(boolQueryBuilder)
+                .addAggregation(aggregationBuilder);
+
+        SearchResponse searchResponse = searchRequestBuilder.get();
+
+        List<HouseBucketDTO> resultList = new ArrayList<>();
+
+        if (searchResponse.status() == RestStatus.OK){
+            Terms terms = searchResponse.getAggregations().get(HouseIndexKey.AGG_REGION);
+            for (Terms.Bucket bucket : terms.getBuckets()) {
+                resultList.add(new HouseBucketDTO(bucket.getKeyAsString(), bucket.getDocCount()));
+            }
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<Integer> getMapHouse(String cityEnName, String orderBy, String orderDirection, int start, int size) {
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        boolQuery.filter(QueryBuilders.termQuery(HouseIndexKey.CITY_EN_NAME, cityEnName));
+
+        String order = new TransferOrderUtil().getEsOrderBy(orderBy);
+        SearchRequestBuilder searchRequestBuilder = this.esClient.prepareSearch(INDEX_NAME)
+                .setTypes(INDEX_TYPE)
+                .setQuery(boolQuery)
+                .addSort(order, SortOrder.fromString(orderDirection))
+                .setFrom(start)
+                .setSize(size);
+
+        List<Integer> houseIds = new ArrayList<>();
+        SearchResponse response = searchRequestBuilder.get();
+        if (response.status() != RestStatus.OK) {
+            logger.warn("Search status is not ok for " + searchRequestBuilder);
+            return houseIds;
+        }
+
+        for (SearchHit hit : response.getHits()) {
+            houseIds.add(Integer.parseInt(String.valueOf(hit.getSource().get(HouseIndexKey.HOUSE_ID))));
+        }
+        return houseIds;
+    }
+
+    @Override
+    public List<Integer> getMapHouse(MapSearch mapSearch) {
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        boolQuery.filter(QueryBuilders.termQuery(HouseIndexKey.CITY_EN_NAME, mapSearch.getCityEnName()));
+
+        boolQuery.filter(
+                QueryBuilders.geoBoundingBoxQuery("location")
+                        .setCorners(
+                                new GeoPoint(mapSearch.getLeftLatitude(), mapSearch.getLeftLongitude()),
+                                new GeoPoint(mapSearch.getRightLatitude(), mapSearch.getRightLongitude())
+                        ));
+
+        String order = new TransferOrderUtil().getEsOrderBy(mapSearch.getOrderBy());
+        SearchRequestBuilder builder = this.esClient.prepareSearch(INDEX_NAME)
+                .setTypes(INDEX_TYPE)
+                .setQuery(boolQuery)
+                .addSort(order,SortOrder.fromString(mapSearch.getOrderDirection()))
+                .setFrom(mapSearch.getStart())
+                .setSize(mapSearch.getSize());
+
+        List<Integer> houseIds = new ArrayList<>();
+        SearchResponse response = builder.get();
+        if (RestStatus.OK != response.status()) {
+            logger.warn("Search status is not ok for " + builder);
+            throw new BusinessException("Search status is not ok");
+        }
+
+        for (SearchHit hit : response.getHits()) {
+            houseIds.add(Integer.parseInt(String.valueOf(hit.getSource().get(HouseIndexKey.HOUSE_ID))));
+        }
+        return houseIds;
     }
 
 
