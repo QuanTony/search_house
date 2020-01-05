@@ -25,14 +25,13 @@ public class MqSender implements RabbitTemplate.ConfirmCallback,RabbitTemplate.R
     private RabbitTemplate rabbitTemplate;
 
     public void send(String topicKey,String message){
-        rabbitTemplate.setConfirmCallback(this);
         //生成唯一标识id
         CorrelationData correlationData = new CorrelationData(UUID.randomUUID().toString());
         System.out.println("消息id:" + correlationData.getId());
-//        MessageProperties messageProperties = new MessageProperties();
-//        messageProperties.getHeaders().put("desc","desc..");
-//        Message msg = new Message(message.getBytes(),messageProperties);
-        this.rabbitTemplate.convertAndSend(MqConstants.ES_EXCHANGE_NAME, topicKey, message, correlationData);
+        MessageProperties messageProperties = new MessageProperties();
+        messageProperties.getHeaders().put("desc","desc..");
+        Message msg = new Message(message.getBytes(),messageProperties);
+        this.rabbitTemplate.convertAndSend(MqConstants.ES_EXCHANGE_NAME, topicKey, msg, correlationData);
     }
 
     @Override
