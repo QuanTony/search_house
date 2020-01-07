@@ -235,7 +235,7 @@
         <dependency>
             <groupId>org.csource</groupId>
             <artifactId>fastdfs-client-java</artifactId>
-            <version>1.27-SNAPSHOT</version>
+            <version>1.29-SNAPSHOT</version>
         </dependency>
         <!-- es -->
         <dependency>
@@ -283,7 +283,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <!-- 指定该Main Class为全局的唯一入口 -->
-                    <mainClass>com.project.SearchApplication</mainClass>
+                    <mainClass>com.project.search.SearchApplication</mainClass>
                 </configuration>
             </plugin>
             <!--springboot 热加载 fork :  如果没有该项配置，肯定devtools不会起作用，即应用不会restart -->

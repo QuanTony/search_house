@@ -16,7 +16,13 @@ import java.net.UnknownHostException;
 @Slf4j
 public class ElasticSearchConfig {
     @Value("${es.cluster.host}")
-    private String esHost;
+    private String esMasterHost;
+
+    @Value("${es.cluster.host1}")
+    private String esSlaveHost1;
+
+    @Value("${es.cluster.host2}")
+    private String esSlaveHost2;
 
     @Value("${es.cluster.name}")
     private String clusterName;
@@ -36,17 +42,17 @@ public class ElasticSearchConfig {
         try{
             Settings settings = Settings.builder()
                     .put("cluster.name", clusterName)
-                    .put("client.transport.sniff", true)
+//                    .put("client.transport.sniff", true)
                     .build();
 
-            InetSocketTransportAddress master = new InetSocketTransportAddress(InetAddress.getByName(esHost), masterPost);
-            InetSocketTransportAddress slaveAddress1 = new InetSocketTransportAddress(InetAddress.getByName(esHost), slavePost1);
-            InetSocketTransportAddress slaveAddress2 = new InetSocketTransportAddress(InetAddress.getByName(esHost), slavePost2);
+            InetSocketTransportAddress master = new InetSocketTransportAddress(InetAddress.getByName(esMasterHost), masterPost);
+            InetSocketTransportAddress slaveAddress1 = new InetSocketTransportAddress(InetAddress.getByName(esSlaveHost1), slavePost1);
+//            InetSocketTransportAddress slaveAddress2 = new InetSocketTransportAddress(InetAddress.getByName(esSlaveHost2), slavePost2);
 
             client = new PreBuiltTransportClient(settings)
                     .addTransportAddress(master)
-                    .addTransportAddress(slaveAddress1)
-                    .addTransportAddress(slaveAddress2);
+                    .addTransportAddress(slaveAddress1);
+//                    .addTransportAddress(slaveAddress2);
         } catch (Exception e) {
             log.info("初始化es失败:" + e.getMessage());
         }
